@@ -116,8 +116,7 @@ def training_loop(
         network.eval()
         with torch.no_grad():
             val_loss, val_recovered_sino, mask = loss_func.run_mae(val_sino.to('cuda'))
-            # if cur_epoch%1 == 0:
-            if True:
+            if cur_epoch%10 == 0:
                 # val_ssim, val_psnr, val_mse, val_sinomse = evaluate(network, validation_set, Amatrix)
                 # Print log
                 print(

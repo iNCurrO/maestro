@@ -36,11 +36,9 @@ def set_dir(config):
         dirnum = int(logdir[-1][:3])+1
     else:
         dirnum = 0
-    __savedir__ = f"{dirnum:03}"
-    losses = ""
-    # TODO log name define
+    __savedir__ = f"{dirnum:03}_{config.masking_mode}_e_h{config.e_head}_dim{config.e_dim}_depth{config.e_depth}_d_h{config.d_head}_dim{config.d_dim}_depth{config.d_depth}"
     # if not os.name == 'nt':
-    #     vessl.init(message=platform.node() + "_" + __savedir__)
+    #     vessl.init(__savedir__)
     __savedir__ = os.path.join(config.logdir, __savedir__)
     if config.resume:
         print(f"Resume from: {config.resume}\n")

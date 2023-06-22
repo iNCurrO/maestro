@@ -29,12 +29,14 @@ def main():
     network = mae.MaskedAutoEncoder(
         num_det=config.num_det,
         num_views=config.view,
+        embed_dim=config.e_dim,
+        depth = config.e_depth,
+        num_heads=config.e_head,
+        decoder_depth=config.d_depth,
+        decoder_embed_dim=config.d_dim,
+        decoder_num_heads=config.d_head,
         cls_token=True,
     )
-    
-    # def __init__(self, num_det=724, num_views=720, embed_dim=1024, depth=24, num_heads=16,
-    #              decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16, mlp_rato=4.,
-    #              norm_layer=torch.nn.LayerNorm, norm_pix_loss=False, pos_encoding = True, cls_token=False) -> None:
 
     # initialize optimzier
     optimizer = set_optimizer(config, network)

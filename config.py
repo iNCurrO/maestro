@@ -22,13 +22,22 @@ data_arg.add_argument('--dataname', type=str, default="Test3")
 
 # Network
 network_arg = add_argument_group('Network')
-network_arg.add_argument('--resume', type=str, default=None)
-network_arg.add_argument('--trainingepoch', type=int, default=500)
-network_arg.add_argument('--optimizer', type=str, default="ADAM", choices=["ADAM", "ADAMW"])
-network_arg.add_argument('--learningrate', type=float, default=2.5e-5)
-network_arg.add_argument('--min_lr', type=float, default=1e-7)
-network_arg.add_argument('--weightdecay', type=float, default=0.0001)
-network_arg.add_argument('--warmup_epochs', type=int, default=50)
+network_arg.add_argument('--masking_mode', type=str, default="mae")
+network_arg.add_argument('--e_head', type=int, default=16, help='Number of heads for MSA in encoder')
+network_arg.add_argument('--e_depth', type=int, default=24, help="Depth of encoder (number of stacked transformer block)")
+network_arg.add_argument('--e_dim', type=int, default=1024, help="Dimension of token for encoder")
+network_arg.add_argument('--d_head', type=int, default=16, help='Number of heads for MSA in decoder')
+network_arg.add_argument('--d_depth', type=int, default=8, help="Depth of decoder (number of stacked transformer block)")
+network_arg.add_argument('--d_dim', type=int, default=512, help="Dimension of token for decoder")
+
+# #hyperparam
+hyper_param_arg = add_argument_group('Hyperparameters')
+hyper_param_arg.add_argument('--trainingepoch', type=int, default=500)
+hyper_param_arg.add_argument('--optimizer', type=str, default="ADAM", choices=["ADAM", "ADAMW"])
+hyper_param_arg.add_argument('--learningrate', type=float, default=2.5e-5)
+hyper_param_arg.add_argument('--min_lr', type=float, default=1e-7)
+hyper_param_arg.add_argument('--weightdecay', type=float, default=0.0001)
+hyper_param_arg.add_argument('--warmup_epochs', type=int, default=50)
 
 # Forward Projection
 proj_arg = add_argument_group('ForwardProejction')
@@ -61,20 +70,16 @@ recon_arg.add_argument('--num_interp', type=int, default=4, help='number of sinc
 recon_arg.add_argument('--no_mask', action='store_true', help='Not using Masking')
 
 # Geometry conditions
-proj_arg.add_argument('--SCD', type=float, default=400,
-                      help='source-center distance (mm scale)')
-proj_arg.add_argument('--SDD', type=float, default=800,
-                      help='source-detector distance (mm scale)')
-proj_arg.add_argument('--num_det', type=int, default=724,
-                      help='number of detector')
-proj_arg.add_argument('--det_interval', type=float, default=1,
-                      help='interval of detector (mm scale)')
-proj_arg.add_argument('--det_lets', type=int, default=3,
-                      help='number of detector lets')
+proj_arg.add_argument('--SCD', type=float, default=400, help='source-center distance (mm scale)')
+proj_arg.add_argument('--SDD', type=float, default=800, help='source-detector distance (mm scale)')
+proj_arg.add_argument('--num_det', type=int, default=724, help='number of detector')
+proj_arg.add_argument('--det_interval', type=float, default=1, help='interval of detector (mm scale)')
+proj_arg.add_argument('--det_lets', type=int, default=3, help='number of detector lets')
 
 
 # System parameters
 sysparm_arg = add_argument_group('System')
+sysparm_arg.add_argument('--resume', type=str, default=None)
 sysparm_arg.add_argument('--logdir', type=str, default='/logs')
 sysparm_arg.add_argument('--numworkers', type=int, default=4)
 sysparm_arg.add_argument('--training', type=bool, default=True)
