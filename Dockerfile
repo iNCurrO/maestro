@@ -1,5 +1,6 @@
 FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel
 ENV PYTHON_VERSION=3.11 
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update 
 
@@ -11,8 +12,9 @@ RUN apt-get install -y -q \
     libffi-dev \
     vim \
     libgl1-mesa-glx \
-    zip
-
+    zip \
+    libglib2.0-0
+    
 RUN apt-get install -y -q \
     libsqlite3-dev
 

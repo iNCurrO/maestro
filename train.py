@@ -3,17 +3,17 @@ from models import mae
 from customlib.chores import *
 from customlib.dataset import set_dataset
 from models.training_loop import training_loop
-# from evaluate import evaluate_main
+from evaluate import evaluate_main
 import os
 
-# if not os.name == 'nt':
-#     import vessl
-#     print("Initialize Vessl")
-#     vessl.configure(
-#             organization_name="yonsei-medisys",
-#             project_name="sino-domain-loss",
-#         )
-#     print()
+if not os.name == 'nt':
+    import vessl
+    print("Initialize Vessl")
+    vessl.configure(
+            # organization_name="yonsei-medisys",
+            # project_name="maestro",
+        )
+    print()
 
 
 def main():
@@ -35,6 +35,7 @@ def main():
         decoder_depth=config.d_depth,
         decoder_embed_dim=config.d_dim,
         decoder_num_heads=config.d_head,
+        select_view=config.select_view,
         cls_token=True,
     )
 
@@ -53,15 +54,21 @@ def main():
         print(f"logs will be archived at the {__savedir__}\n")
         config.startepoch = 0
 
-    # if not os.name == 'nt':
-    #     hp = {
-    #         "optimizer": config.optimizer,
-    #         "LR": config.learningrate,
-    #         "weight_decay": config.weightdecay,
-    #         "model_size": network.base_channel(),
-    #         "Resume_from": config.resume
-    #     }
-    #     vessl.hp.update(hp)
+    if not os.name == 'nt':
+        hp = {
+            "Maskingmode": config.masking_mode,
+            "Select view": config.select_view,
+            "Masked view number": config.num_masked_views,
+            "LR": config.learningrate,
+            "weight_decay": config.weightdecay,
+            "Encoder_head": config.e_head,
+            "Encoder_depth": config.e_depth,
+            "Encoder_Dim": config.e_dim,
+            "Decoder_head": config.d_head,
+            "Decoder_depth": config.d_depth,
+            "Decoder_Dim": config.d_dim
+        }
+        vessl.hp.update(hp)
 
     training_loop(
         log_dir=__savedir__,
@@ -76,10 +83,10 @@ def main():
 
     print(f"Train Done!")
 
-    # evaluate_main(resumenum=str(__dirnum__)+'-'+str(config.trainingepoch), __savedir__=__savedir__)
-    # print(f"Testing Done!")
-    # if not os.name == 'nt':
-    #     vessl.finish()
+    evaluate_main(resumenum=str(__dirnum__)+'-'+str(config.trainingepoch), __savedir__=__savedir__)
+    print(f"Testing Done!")
+    if not os.name == 'nt':
+        vessl.finish()
 
 
 if __name__ == "__main__":

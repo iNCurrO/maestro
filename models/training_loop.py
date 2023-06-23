@@ -3,13 +3,13 @@ import time
 import torch
 import math
 
-# if not os.name == 'nt':
-#     import vessl
+if not os.name == 'nt':
+    import vessl
 from customlib.chores import save_network, save_images, lprint, adjust_lr
 # from customlib.metrics import * # TODO
 from models.loss import *
 from forwardprojector.FBP import FBP 
-# from evaluate import evaluate # TODO
+from evaluate import evaluate 
 from datetime import timedelta
 
 def training_loop(
@@ -41,7 +41,7 @@ def training_loop(
     # Constructing losses
     print("Loading loss function....")
     loss_func = loss_engine(
-        network=network,
+        network=network, num_masked_views=config.num_masked_views
     )
 
     # Initialize logs
@@ -80,10 +80,11 @@ def training_loop(
 
     # Main Part
     start_time = time.time()
-    print(
+    lprint(
         f"Entering training at {time.localtime(start_time).tm_mon}/{time.localtime(start_time).tm_mday} "
         f"{time.localtime(start_time).tm_hour}h {time.localtime(start_time).tm_min}m "
-        f"{time.localtime(start_time).tm_sec}s"
+        f"{time.localtime(start_time).tm_sec}s",
+        log_dir=log_dir
     )
 
     for cur_epoch in range(config.startepoch, training_epoch):
@@ -91,43 +92,47 @@ def training_loop(
         logs = ""
         for batch_idx, samples in enumerate(training_set):
             optimizer.zero_grad()
-            sino = samples # TODO
+            sino = samples
             loss_item = loss_func.accumulate_gradients(
                 sino.to('cuda')
             )
             if batch_idx % 99 == 0:
                 nettime = time.time() - start_time
                 realtime_epoch = (cur_epoch + ((batch_idx+config.batchsize) / len(training_set)))
-                print(
-                    f'Train Epoch: {cur_epoch}/{training_epoch}, Batch: {batch_idx}/{len(training_set)}' +
-                    f'mean(sec/epoch): '
-                    f'{nettime / realtime_epoch}'
+                lprint(
+                    f'Train Epoch: {cur_epoch:4d}/{training_epoch:4d}, Batch: {batch_idx:6d}/{len(training_set):6d}' +
+                    f', mean(sec/epoch): '
+                    f'{nettime / realtime_epoch:11.5f}'
                     f', loss:' +
-                    str(loss_item) +
-                    f'ETA: {timedelta(seconds=(nettime / realtime_epoch * (training_epoch - realtime_epoch)) if not (cur_epoch==0 and batch_idx==0) else 0)}'
+                    f' {loss_item:12.6f}' +
+                    f', ETA: {timedelta(seconds=(nettime / realtime_epoch * (training_epoch - realtime_epoch)) if not (cur_epoch==0 and batch_idx==0) else 0)}',
+                    log_dir=log_dir
                 )
             if not math.isfinite(loss_item):
-                print(f"Error!: Loss is {loss_item} (at epoch {cur_epoch}), stopping training.")
+                lprint(
+                    f"Error!: Loss is {loss_item} (at epoch {cur_epoch}), stopping training.",
+                    log_dir=log_dir
+                    )
                 exit(1)
             optimizer.step()
-        # vessl.log(step=cur_epoch, payload={"trainingloss_"+keys: logs[keys] for keys in logs})
+        vessl.log(step=cur_epoch, payload={"mse_loss": loss_item})
 
         # Save check point and evaluate
         network.eval()
         with torch.no_grad():
             val_loss, val_recovered_sino, mask = loss_func.run_mae(val_sino.to('cuda'))
             if cur_epoch%10 == 0:
-                # val_ssim, val_psnr, val_mse, val_sinomse = evaluate(network, validation_set, Amatrix)
+                val_ssim, val_psnr, val_mse = evaluate(network, validation_set, FBP_module)
                 # Print log
-                print(
+                lprint(
                     f'==========================================================================\n' +
                     f'Evaluation for Epoch: {cur_epoch}/{training_epoch},' +
                     f'mean(sec/Epoch): {(time.time() - start_time) / (cur_epoch+1)}, loss:' +
                     str(val_loss) + '\n'
-                    # f'metrics: SSIM [{val_ssim}], '
-                    # f'PSRN [{val_psnr}], '
-                    # f'MSE: [{val_mse}], '
-                    # f'sinoMSE: [{val_sinomse}]',
+                    f'metrics: SSIM [{val_ssim}], '
+                    f'PSRN [{val_psnr}], '
+                    f'MSE: [{val_mse}], ',
+                    log_dir=log_dir
                 )
                 save_images(
                     val_recovered_sino.cpu().detach().numpy(),
@@ -148,29 +153,28 @@ def training_loop(
                 if saving_recon_image:
                     recon_img = FBP_module(val_recovered_sino.cpu().detach().cuda()).cpu().numpy()
                     save_images(recon_img,  epoch=cur_epoch, tag="denoised_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
-                # if not os.name == 'nt':
-                #     vessl.log(step=cur_epoch, payload={
-                #         "SSIM": val_ssim,
-                #         "PSNR": val_psnr,
-                #         "MSE": val_mse,
-                #         "sinoMSE": val_sinomse,
-                #     })
+                if not os.name == 'nt':
+                    vessl.log(step=cur_epoch, payload={
+                        "SSIM": val_ssim,
+                        "PSNR": val_psnr,
+                        "MSE": val_mse,
+                    })
 
-                # if not os.name == 'nt':
-                #     vessl.log(payload={"denoised_images": [
-                #         vessl.Image(
-                #             data=val_denoised_img.cpu().detach().numpy(),
-                #             caption=f'Epoch:{cur_epoch:4}'
-                #         )
-                #     ]})
+                if not os.name == 'nt':
+                    vessl.log(payload={"denoised_images": [
+                        vessl.Image(
+                            data=val_recovered_sino.cpu().detach().numpy(),
+                            caption=f'Epoch:{cur_epoch:4}'
+                        )
+                    ]})
             if cur_epoch == training_epoch - 1:
                 save_network(network=network, epoch=training_epoch, optimizer=optimizer, savedir=log_dir)
             elif cur_epoch != 0 and cur_epoch % checkpoint_intvl == 0:
                 save_network(network=network, epoch=cur_epoch, optimizer=optimizer, savedir=log_dir)
         network.train()
         adjust_lr(optimizer, cur_epoch, config)
-        # if not os.name == 'nt':
-        #     vessl.progress((cur_epoch+1)/training_epoch)
+        if not os.name == 'nt':
+            vessl.progress((cur_epoch+1)/training_epoch)
 
     # End Training. Close everything
     with open(os.path.join(log_dir, 'logs.txt'), 'a') as log_file:

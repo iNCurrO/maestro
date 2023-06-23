@@ -17,8 +17,9 @@ data_arg = add_argument_group('Data')
 data_arg.add_argument('--batchsize', type=int, default=8, help='Number of batch size. Recommend power of 2')
 data_arg.add_argument('--valbatchsize', type=int, default=1, help='Number of batch size. Must be square of int')
 data_arg.add_argument('--datadir', type=str, default="/dataset")
-data_arg.add_argument('--dataname', type=str, default="Test3")
-
+data_arg.add_argument('--dataname', type=str, default="figuredata")
+data_arg.add_argument('--select_view', type=str, default="sparse")
+data_arg.add_argument('--num_masked_views', type=int, default=18, help="Number of remaining views after masking procedure")
 
 # Network
 network_arg = add_argument_group('Network')
@@ -36,7 +37,7 @@ hyper_param_arg.add_argument('--trainingepoch', type=int, default=500)
 hyper_param_arg.add_argument('--optimizer', type=str, default="ADAM", choices=["ADAM", "ADAMW"])
 hyper_param_arg.add_argument('--learningrate', type=float, default=2.5e-5)
 hyper_param_arg.add_argument('--min_lr', type=float, default=1e-7)
-hyper_param_arg.add_argument('--weightdecay', type=float, default=0.0001)
+hyper_param_arg.add_argument('--weightdecay', type=float, default=1e-4)
 hyper_param_arg.add_argument('--warmup_epochs', type=int, default=50)
 
 # Forward Projection
@@ -58,7 +59,7 @@ proj_arg.add_argument('--datatype', type=str, default='float',
 
 # Reconstruction
 recon_arg = add_argument_group('Reconstruction')
-recon_arg.add_argument('--originDatasetName', type=str, default='figuredata2')
+recon_arg.add_argument('--originDatasetName', type=str, default='figuredata')
 recon_arg.add_argument('--window', type=str, default='rect', help='Reconstruction window')
 recon_arg.add_argument('--cutoff', type=float, default=0.3, help='Cutoff Frequency of some windows')
 recon_arg.add_argument('--ROIx', type=float, default=0, help='x ROI location')

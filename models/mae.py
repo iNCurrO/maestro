@@ -7,13 +7,13 @@ from customlib.chores import patchify, unpatchify
 class MaskedAutoEncoder(torch.nn.Module):
     def __init__(self, num_det=724, num_views=720, embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16, mlp_rato=4.,
-                 norm_layer=torch.nn.LayerNorm, norm_pix_loss=False, pos_encoding = True, cls_token=False) -> None:
+                 norm_layer=torch.nn.LayerNorm, norm_pix_loss=False, pos_encoding = True, select_view = "random", cls_token=False) -> None:
         super().__init__()
         self._num_det = num_det
         self._num_views = num_views
         self._pos_encoding = pos_encoding
         self._cls_token = cls_token
-        self._masking = "random"
+        self._select_view = select_view
         ## -------------------------------------------------------------
         # Encoder implementation
         #
@@ -32,7 +32,7 @@ class MaskedAutoEncoder(torch.nn.Module):
         else:
             self.cls_token = None
             self.pos_embed_cls = None
-                
+        
         self.blocks = torch.nn.ModuleList([
             Block(embed_dim, num_heads, mlp_rato, True, norm_layer=norm_layer) for i in range(depth)
         ])
@@ -94,33 +94,48 @@ class MaskedAutoEncoder(torch.nn.Module):
         # init others
         self.apply(self._init_weights)
         
-    def random_masking(self, sinogram, mask_ratio):
+    def random_masking(self, sinogram, num_masked_views=18):
         N, V, L = sinogram.shape
-        len_keep = int(V * (1 - mask_ratio))
         noise = torch.rand(N, V, device=sinogram.device)
         
         # sort noise for each sample
-        idx_shuffle = torch.argsort(noise, dim=1) # numbering for each elements
-        idx_restore = torch.argsort(idx_shuffle, dim=1) # which elements is nth order?
+        idx_shuffle = torch.argsort(noise, dim=1) # which elements is nth order?
+        idx_restore = torch.argsort(idx_shuffle, dim=1) # numbering for each elements
         
-        idx_keep = idx_shuffle[:, :len_keep]
+        idx_keep = idx_shuffle[:, :num_masked_views]
         sinogram_masked = torch.gather(
             sinogram, dim=1, index=idx_keep.unsqueeze(-1).repeat(1, 1, L)
             )
         
         # Generate binarized mask
         mask = torch.ones([N, V], device=sinogram.device, dtype=torch.int64)
-        mask[:, :len_keep] = 0
+        mask[:, :num_masked_views] = 0
         mask = torch.gather(mask, dim=1, index=idx_restore) 
         
         return sinogram_masked, mask, idx_restore
     
     
-    def sparse_masking(self, sinogram, mask_ratio):
-        # TODO
-        pass
+    def sparse_masking(self, sinogram, num_masked_views=18):
+        N, V, L = sinogram.shape
+        assert V % num_masked_views == 0, print("The number of views ({sinogram}) for sinogram must be divided by num_masked_views ({num_masked_views})")
         
-    def limited_masking(self, sinogram, mask_ratio):
+        mask = torch.ones([N, V], device=sinogram.device, dtype=torch.int64)
+        mask = mask.reshape([N, int(V/num_masked_views), num_masked_views])
+        mask[:, :, -1] = 1
+        mask = mask.reshape([N, V])
+        
+        idx_shuffle = torch.argsort(mask, dim=1, descending=True)
+        idx_restore = torch.argsort(idx_shuffle, dim=1)
+        idx_keep = idx_shuffle[:, :num_masked_views]
+        sinogram_masked = torch.gather(
+            sinogram, dim=1, index=idx_keep.unsqueeze(-1).repeat(1, 1, L)
+            )
+        
+        # Generate binarized mask
+        return sinogram_masked, mask, idx_restore
+        
+        
+    def limited_masking(self, sinogram, num_masked_views=18):
         # TODO
         pass
         
@@ -133,7 +148,7 @@ class MaskedAutoEncoder(torch.nn.Module):
             torch.nn.init.constant_(m.bias, 0)
             torch.nn.init.constant_(m.weight, 1.0)
             
-    def masking(self, x, mask_ratio, mask=None):
+    def masking(self, x, num_masked_views=18, mask=None):
         """
         Masking function have three version:
         1. SparseView  -> Not implemented TODO
@@ -141,14 +156,16 @@ class MaskedAutoEncoder(torch.nn.Module):
         3. Random View 
         """
         if mask is None:
-            if self._masking == "random":
-                return self.random_masking(x, mask_ratio)
+            if self._select_view == "random":
+                return self.random_masking(x, num_masked_views)
+            elif self._select_view == "sparse":
+                return self.sparse_masking(x, num_masked_views)
             else:
                 raise "Not implemented masking mode: {self._masking}" # TODO
         else:
             raise "Not implemented fixed mask mode" # TODO
             
-    def forward_encoder(self, sinogram, mask_ratio):
+    def forward_encoder(self, sinogram, num_masked_views=18):
         # embed patches
         x = self.patch_embed(sinogram)
 
@@ -156,7 +173,7 @@ class MaskedAutoEncoder(torch.nn.Module):
         x = x + self.pos_embed
 
         # masking: length -> length * mask_ratio
-        sinogram_masked, mask, idx_restore = self.masking(x, mask_ratio)
+        sinogram_masked, mask, idx_restore = self.masking(x, num_masked_views)
         # append cls token
         cls_token = self.cls_token + self.pos_embed_cls
         cls_tokens = cls_token.expand(sinogram_masked.shape[0], -1, -1)
@@ -227,8 +244,8 @@ class MaskedAutoEncoder(torch.nn.Module):
         x = torch.gather(x, dim=1, index=mask.reshape([x.shape[0], 1, mask.shape[-1], 1]).repeat(1, 1, 1, x.shape[-1]))
         return x
 
-    def forward(self, sinogram, mask_ratio):
-        latent, mask, idx_restore = self.forward_encoder(sinogram, mask_ratio=mask_ratio)
+    def forward(self, sinogram, num_masked_views=18):
+        latent, mask, idx_restore = self.forward_encoder(sinogram, num_masked_views=num_masked_views)
         pred = self.forward_decoder(latent, idx_restore)
         loss = self.forward_loss(sinogram, pred, mask)
         recovered = self.recover_image(pred, sinogram, mask)

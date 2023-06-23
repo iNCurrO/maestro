@@ -5,8 +5,8 @@ import platform
 from PIL import Image
 from timm.optim import optim_factory
 import math
-# if not os.name == 'nt':
-    # import vessl
+if not os.name == 'nt':
+    import vessl
 
 
 def patchify(sinogram):
@@ -36,9 +36,13 @@ def set_dir(config):
         dirnum = int(logdir[-1][:3])+1
     else:
         dirnum = 0
-    __savedir__ = f"{dirnum:03}_{config.masking_mode}_e_h{config.e_head}_dim{config.e_dim}_depth{config.e_depth}_d_h{config.d_head}_dim{config.d_dim}_depth{config.d_depth}"
-    # if not os.name == 'nt':
-    #     vessl.init(__savedir__)
+    __savedir__ = f"{dirnum:03}_{config.masking_mode}_{config.select_view}{config.num_masked_views}_e_h{config.e_head}_dim{config.e_dim}_depth{config.e_depth}_d_h{config.d_head}_dim{config.d_dim}_depth{config.d_depth}"
+    if not os.name == 'nt':
+        print("Vessl initialization")
+        try:
+            vessl.init(message=__savedir__)
+        except:
+            print("Vessl init failed!")
     __savedir__ = os.path.join(config.logdir, __savedir__)
     if config.resume:
         print(f"Resume from: {config.resume}\n")
@@ -106,7 +110,7 @@ def save_images(input_images, tag, epoch, savedir, batchnum, sino=False):
 def save_image(img, fname, sino=False):
     # TODO
     if sino:
-        lo, hi = [0, 100]
+        lo, hi = [-10, 200]
     else:
         lo, hi = [0, 1]
     img = np.asarray(img, dtype=np.float32)
