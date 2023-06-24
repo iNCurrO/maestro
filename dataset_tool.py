@@ -5,7 +5,7 @@ import zipfile
 
 
 def main():
-    url='https://drive.google.com/file/d/1MMuuP4DOrA9uKv-G6d0XH5l6aoo-ugtQ'
+    url='https://drive.google.com/file/d/1MMuuP4DOrA9uKv-G6d0XH5l6aoo-ugtQ/view?usp=drive_link'
     print("Parse configurations")
     config = get_config()
     if not os.path.exists(os.path.join(config.datadir)):
