@@ -3,6 +3,7 @@ from models import mae
 from customlib.chores import *
 from customlib.dataset import set_dataset
 from models.training_loop import training_loop
+from packaging import version
 from evaluate import evaluate_main
 import os
 
@@ -38,6 +39,11 @@ def main():
         select_view=config.select_view,
         cls_token=True,
     )
+    
+    if version.parse(torch.__version__) >= version.parse("2.0.0"):
+        print(f"Compling network...")
+        network = torch.compile(network)
+        print(f"Network ready!")
 
     # initialize optimzier
     optimizer = set_optimizer(config, network)

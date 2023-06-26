@@ -18,7 +18,7 @@ data_arg.add_argument('--batchsize', type=int, default=8, help='Number of batch 
 data_arg.add_argument('--valbatchsize', type=int, default=1, help='Number of batch size. Must be square of int')
 data_arg.add_argument('--datadir', type=str, default="/dataset")
 data_arg.add_argument('--dataname', type=str, default="figuredata")
-data_arg.add_argument('--select_view', type=str, default="sparse")
+data_arg.add_argument('--select_view', type=str, default="sparse", choices=["random", "sparse", "limited"])
 data_arg.add_argument('--num_masked_views', type=int, default=18, help="Number of remaining views after masking procedure")
 
 # Network

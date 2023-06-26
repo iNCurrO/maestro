@@ -142,14 +142,15 @@ def training_loop(
                     batchnum=val_batch_size,
                     sino=True
                 )
-                save_images(
-                    mask.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
-                    epoch=cur_epoch,
-                    tag="masked",
-                    savedir=log_dir,
-                    batchnum=val_batch_size,
-                    sino=False
-                )
+                if config.selectview == "random":
+                    save_images(
+                        mask.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
+                        epoch=cur_epoch,
+                        tag="masked",
+                        savedir=log_dir,
+                        batchnum=val_batch_size,
+                        sino=False
+                    )
                 if saving_recon_image:
                     recon_img = FBP_module(val_recovered_sino.cpu().detach().cuda()).cpu().numpy()
                     save_images(recon_img,  epoch=cur_epoch, tag="denoised_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  

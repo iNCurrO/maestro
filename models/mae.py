@@ -121,7 +121,7 @@ class MaskedAutoEncoder(torch.nn.Module):
         
         mask = torch.ones([N, V], device=sinogram.device, dtype=torch.int64)
         mask = mask.reshape([N, int(V/num_masked_views), num_masked_views])
-        mask[:, :, -1] = 1
+        mask[:, :, -1] = 0
         mask = mask.reshape([N, V])
         
         idx_shuffle = torch.argsort(mask, dim=1, descending=True)
@@ -136,8 +136,21 @@ class MaskedAutoEncoder(torch.nn.Module):
         
         
     def limited_masking(self, sinogram, num_masked_views=18):
-        # TODO
-        pass
+        N, V, L = sinogram.shape
+        assert V % num_masked_views == 0, print("The number of views ({sinogram}) for sinogram must be divided by num_masked_views ({num_masked_views})")
+        
+        mask = torch.ones([N, V], device=sinogram.device, dtype=torch.int64)
+        mask[:,:num_masked_views] = 0
+        
+        idx_shuffle = torch.argsort(mask, dim=1, descending=True)
+        idx_restore = torch.argsort(idx_shuffle, dim=1)
+        idx_keep = idx_shuffle[:, :num_masked_views]
+        sinogram_masked = torch.gather(
+            sinogram, dim=1, index=idx_keep.unsqueeze(-1).repeat(1, 1, L)
+            )
+        
+        # Generate binarized mask
+        return sinogram_masked, mask, idx_restore
         
     def _init_weights(self, m):
         if isinstance(m, torch.nn.Linear):
@@ -160,10 +173,12 @@ class MaskedAutoEncoder(torch.nn.Module):
                 return self.random_masking(x, num_masked_views)
             elif self._select_view == "sparse":
                 return self.sparse_masking(x, num_masked_views)
+            elif self._select_view == "limit":
+                return self.limited_masking(x, num_masked_views)
             else:
-                raise "Not implemented masking mode: {self._masking}" # TODO
+                raise "Not implemented masking mode: {self._masking}"
         else:
-            raise "Not implemented fixed mask mode" # TODO
+            raise "Not implemented fixed mask mode"
             
     def forward_encoder(self, sinogram, num_masked_views=18):
         # embed patches
