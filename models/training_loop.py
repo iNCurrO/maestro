@@ -142,7 +142,7 @@ def training_loop(
                     batchnum=val_batch_size,
                     sino=True
                 )
-                if config.selectview == "random":
+                if config.select_view == "random":
                     save_images(
                         mask.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
                         epoch=cur_epoch,
