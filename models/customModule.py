@@ -23,7 +23,7 @@ class PatchEmbed(torch.nn.Module):
         self.norm = norm_layer(embed_dim) if norm_layer else torch.nn.Identity()
 
     def forward(self, x):
-        B, C, D, V = x.shape
+        B, C, V, D = x.shape
         if C==3:
             x = torch.mean(x, dim=1)
         assert x.shape[1] == 1, f"Input image channel is wrong ({C}), please check it"
