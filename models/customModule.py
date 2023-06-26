@@ -26,9 +26,9 @@ class PatchEmbed(torch.nn.Module):
         B, C, D, V = x.shape
         if C==3:
             x = torch.mean(x, dim=1)
-        assert(x.shape[1] == 1, f"Input image channel is wrong ({C}), please check it")
-        assert(D == self.num_det, f"Input image height ({D}) doesn't match model ({self.num_det}).")
-        assert(V == self.num_views, f"Input image width ({V}) doesn't match model ({self.num_views}).")
+        assert x.shape[1] == 1, f"Input image channel is wrong ({C}), please check it"
+        assert D == self.num_det, f"Input image height ({D}) doesn't match model ({self.num_det})."
+        assert V == self.num_views, f"Input image width ({V}) doesn't match model ({self.num_views})."
         # shape of x (B, 1, D ,V)
         x = self.proj(x)
         # shape of x (B, embed_dim, 1, V)
