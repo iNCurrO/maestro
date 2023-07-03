@@ -75,11 +75,11 @@ def evaluate_main(resumenum=None, __savedir__=None):
     print(f"Evaluation logs will be archived at the {__savedir__}\n")
     resume_network(resume=resumenum, network=network, optimizer=optimizer, config=config)
     network.eval()
-    total_SSIM, total_PSNR, total_MSE, total_sinoMSE = evaluate(network, valdataloader, Amatrix, saveimg=True, savedir = __savedir__)
+    total_SSIM, total_PSNR, total_MSE = evaluate(network, valdataloader, Amatrix)
 
     log_str = f'Finished! SSIM: {total_SSIM}, PSNR: {total_PSNR}, '\
               f'MSE in image domain: {total_MSE}, ' \
-              f'MSE in sino domain: {total_sinoMSE}\nFor total {len(valdataloader)}'
+              f'For total {len(valdataloader)}'
     print(log_str)
     with open(os.path.join(__savedir__, 'validation_logs.txt'), 'w') as log_file:
         print(log_str, file=log_file)
