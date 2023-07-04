@@ -5,6 +5,7 @@ from config import get_config
 import os
 import numpy as np
 import time
+import random
 from scipy.io import loadmat
 import glob
 from customlib.chores import save_image
@@ -22,6 +23,7 @@ def main():
     print("Amatrix ready!")
 
     targetimg_list = glob.glob(os.path.join(args.datadir, args.originDatasetName, '*'))
+    targetimg_list = random.shuffle(targetimg_list)
     save_path = os.path.join(args.datadir, args.dataname)
     os.makedirs(save_path, exist_ok=True)
     print('save path is {}'.format(save_path))
