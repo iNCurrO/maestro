@@ -7,13 +7,15 @@ from customlib.chores import patchify, unpatchify
 class MaskedAutoEncoder(torch.nn.Module):
     def __init__(self, num_det=724, num_views=720, embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16, mlp_rato=4.,
-                 norm_layer=torch.nn.LayerNorm, norm_pix_loss=False, pos_encoding = True, select_view = "random", cls_token=False) -> None:
+                 norm_layer=torch.nn.LayerNorm, norm_pix_loss=False, pos_encoding = True, 
+                 select_view = "random", cls_token=False, remasking=False) -> None:
         super().__init__()
         self._num_det = num_det
         self._num_views = num_views
         self._pos_encoding = pos_encoding
         self._cls_token = cls_token
         self._select_view = select_view
+        self._remasking = remasking
         ## -------------------------------------------------------------
         # Encoder implementation
         #
@@ -260,8 +262,11 @@ class MaskedAutoEncoder(torch.nn.Module):
         return x
 
     def forward(self, sinogram, num_masked_views=18):
-        latent, mask, idx_restore = self.forward_encoder(sinogram, num_masked_views=num_masked_views)
-        pred = self.forward_decoder(latent, idx_restore)
-        loss = self.forward_loss(sinogram, pred, mask)
-        recovered = self.recover_image(pred, sinogram, mask)
-        return loss, recovered, mask
+        if self._remasking:
+            pass
+        else:
+            latent, mask, idx_restore = self.forward_encoder(sinogram, num_masked_views=num_masked_views)
+            pred = self.forward_decoder(latent, idx_restore)
+            loss = self.forward_loss(sinogram, pred, mask)
+            recovered = self.recover_image(pred, sinogram, mask)
+            return [loss], recovered, mask

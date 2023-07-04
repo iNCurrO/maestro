@@ -17,8 +17,9 @@ class loss_engine:
     
     def accumulate_gradients(self, sinogram):
         loss, _, _ = self.run_mae(sinogram)
-        loss.backward()
-        return loss.cpu().detach().item()
+        for ii in range(len(loss)):
+            loss[ii].backward()
+        return [loss[ii].cpu().detach().item() for ii in range(len(loss))]
     
 
 
