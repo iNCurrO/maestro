@@ -23,7 +23,7 @@ def main():
     print("Amatrix ready!")
 
     targetimg_list = glob.glob(os.path.join(args.datadir, args.originDatasetName, '*'))
-    targetimg_list = random.shuffle(targetimg_list)
+    random.shuffle(targetimg_list)
     save_path = os.path.join(args.datadir, args.dataname)
     os.makedirs(save_path, exist_ok=True)
     print('save path is {}'.format(save_path))
