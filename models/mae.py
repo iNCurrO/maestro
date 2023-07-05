@@ -119,7 +119,7 @@ class MaskedAutoEncoder(torch.nn.Module):
     
     def sparse_masking(self, sinogram, num_masked_views=18):
         N, V, L = sinogram.shape
-        assert V % num_masked_views == 0, print("The number of views ({sinogram}) for sinogram must be divided by num_masked_views ({num_masked_views})")
+        assert V % num_masked_views == 0, print(f"The number of views ({sinogram}) for sinogram must be divided by num_masked_views ({num_masked_views})")
         
         mask = torch.ones([N, V], device=sinogram.device, dtype=torch.int64)
         mask = mask.reshape([N, int(V/num_masked_views), num_masked_views])
@@ -139,7 +139,7 @@ class MaskedAutoEncoder(torch.nn.Module):
         
     def limited_masking(self, sinogram, num_masked_views=18):
         N, V, L = sinogram.shape
-        assert V % num_masked_views == 0, print("The number of views ({sinogram}) for sinogram must be divided by num_masked_views ({num_masked_views})")
+        assert V % num_masked_views == 0, print(f"The number of views ({sinogram}) for sinogram must be divided by num_masked_views ({num_masked_views})")
         
         mask = torch.ones([N, V], device=sinogram.device, dtype=torch.int64)
         mask[:,:num_masked_views] = 0

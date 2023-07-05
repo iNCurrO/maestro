@@ -99,6 +99,12 @@ def training_loop(
             loss_log_text = f"["
             for ii in range(len(loss_item)):
                 loss_log_text += f"{loss_item[ii]}"
+                if not math.isfinite(loss_item[ii]):
+                    lprint(
+                        f"Error!: Loss is {loss_item[ii]} for {ii}th loss (at epoch {cur_epoch}), stopping training.",
+                        log_dir=log_dir
+                        )
+                    exit(1)
             loss_log_text += f"]"
             if batch_idx % 99 == 0:
                 nettime = time.time() - start_time
@@ -111,12 +117,6 @@ def training_loop(
                     f', ETA: {timedelta(seconds=(nettime / realtime_epoch * (training_epoch - realtime_epoch)) if not (cur_epoch==0 and batch_idx==0) else 0)}',
                     log_dir=log_dir
                 )
-            if not math.isfinite(loss_item):
-                lprint(
-                    f"Error!: Loss is " + loss_log_text + f" (at epoch {cur_epoch}), stopping training.",
-                    log_dir=log_dir
-                    )
-                exit(1)
             optimizer.step()
         if config.remasking:
             vessl.log(step=cur_epoch, payload={
