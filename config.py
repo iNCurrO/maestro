@@ -14,7 +14,7 @@ def add_argument_group(name):
 
 # Data
 data_arg = add_argument_group('Data')
-data_arg.add_argument('--batchsize', type=int, default=8, help='Number of batch size. Recommend power of 2')
+data_arg.add_argument('--batchsize', type=int, default=32, help='Number of batch size. Recommend power of 2')
 data_arg.add_argument('--valbatchsize', type=int, default=1, help='Number of batch size. Must be square of int')
 data_arg.add_argument('--datadir', type=str, default="/dataset")
 data_arg.add_argument('--dataname', type=str, default="Figures_small")
@@ -24,6 +24,7 @@ data_arg.add_argument('--num_masked_views', type=int, default=90, help="Number o
 # Network
 network_arg = add_argument_group('Network')
 network_arg.add_argument('--masking_mode', type=str, default="mae")
+network_arg.add_argument('--remasking', type=bool, default=False)
 network_arg.add_argument('--e_head', type=int, default=16, help='Number of heads for MSA in encoder')
 network_arg.add_argument('--e_depth', type=int, default=24, help="Depth of encoder (number of stacked transformer block)")
 network_arg.add_argument('--e_dim', type=int, default=1024, help="Dimension of token for encoder")
