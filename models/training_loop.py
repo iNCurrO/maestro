@@ -119,7 +119,6 @@ def training_loop(
             if (accumiter+1)%config.accumiter == 0 :
                 optimizer.step()
                 optimizer.zero_grad()
-                print("tick!")
             accumiter += 1
         if config.remasking:
             vessl.log(step=cur_epoch, payload={
