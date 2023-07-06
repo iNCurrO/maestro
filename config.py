@@ -14,6 +14,7 @@ def add_argument_group(name):
 
 # Data
 data_arg = add_argument_group('Data')
+data_arg.add_argument('--accumiter', type=int, default=2)
 data_arg.add_argument('--batchsize', type=int, default=32, help='Number of batch size. Recommend power of 2')
 data_arg.add_argument('--valbatchsize', type=int, default=1, help='Number of batch size. Must be square of int')
 data_arg.add_argument('--datadir', type=str, default="/dataset")
@@ -65,7 +66,7 @@ recon_arg.add_argument('--window', type=str, default='rect', help='Reconstructio
 recon_arg.add_argument('--cutoff', type=float, default=0.3, help='Cutoff Frequency of some windows')
 recon_arg.add_argument('--ROIx', type=float, default=0, help='x ROI location')
 recon_arg.add_argument('--ROIy', type=float, default=0, help='y ROI location')
-recon_arg.add_argument('--recon_size', type=list, default=[512, 512], help='Reconstruction image size')
+recon_arg.add_argument('--recon_size', type=list, default=[256, 256], help='Reconstruction image size')
 recon_arg.add_argument('--recon_filter', type=str, default='ram-lak', help='Reconstruction Filter')
 recon_arg.add_argument('--recon_interval', type=float, default=0.4525, help='Pixel size of the reconstruction image')
 recon_arg.add_argument('--num_interp', type=int, default=4, help='number of sinc interpolation in sinogram domain')

@@ -15,10 +15,10 @@ class loss_engine:
         loss, pred, mask = self._network(sinogram, self._num_masked_views)
         return loss, pred, mask
     
-    def accumulate_gradients(self, sinogram):
+    def accumulate_gradients(self, sinogram, accumiter = 1):
         loss, _, _ = self.run_mae(sinogram)
         for ii in range(len(loss)):
-            loss[ii].backward()
+            (loss[ii]/accumiter).backward()
         return [loss[ii].cpu().detach().item() for ii in range(len(loss))]
     
 
