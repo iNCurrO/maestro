@@ -93,7 +93,7 @@ def training_loop(
         for batch_idx, samples in enumerate(training_set):
             sino = samples
             loss_item = loss_func.accumulate_gradients(
-                sino.to('cuda'), accumiter
+                sino.to('cuda'), config.accumiter
             )
             loss_log_text = f"["
             for ii in range(len(loss_item)):
@@ -119,7 +119,8 @@ def training_loop(
             if (accumiter+1)%config.accumiter == 0 :
                 optimizer.step()
                 optimizer.zero_grad()
-            accumiter == 1
+                print("tick!")
+            accumiter += 1
         if config.remasking:
             vessl.log(step=cur_epoch, payload={
                 "mse_loss_0": loss_item[0],
