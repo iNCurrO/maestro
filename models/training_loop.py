@@ -190,7 +190,7 @@ def training_loop(
                     if saving_recon_image:
                         vessl.log(payload={"denoised_recon_images": [
                             vessl.Image(
-                                data=recon_img.cpu().detach().numpy(),
+                                data=recon_img,
                                 caption=f'Epoch:{cur_epoch:04}'
                             )
                         ]})
