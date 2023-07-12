@@ -184,9 +184,16 @@ def training_loop(
                     vessl.log(payload={"denoised_images": [
                         vessl.Image(
                             data=val_recovered_sino.cpu().detach().numpy(),
-                            caption=f'Epoch:{cur_epoch:4}'
+                            caption=f'Epoch:{cur_epoch:04}'
                         )
                     ]})
+                    if saving_recon_image:
+                        vessl.log(payload={"denoised_recon_images": [
+                            vessl.Image(
+                                data=recon_img.cpu().detach().numpy(),
+                                caption=f'Epoch:{cur_epoch:04}'
+                            )
+                        ]})
             if cur_epoch == training_epoch - 1:
                 save_network(network=network, epoch=training_epoch, optimizer=optimizer, savedir=log_dir)
             elif cur_epoch != 0 and cur_epoch % checkpoint_intvl == 0:
