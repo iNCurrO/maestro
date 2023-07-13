@@ -54,6 +54,7 @@ def evaluate_main(resumenum=None, __savedir__=None):
         decoder_depth=config.d_depth,
         decoder_embed_dim=config.d_dim,
         decoder_num_heads=config.d_head,
+        select_view=config.select_view,
         cls_token=True,
     )
 
