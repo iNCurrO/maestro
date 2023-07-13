@@ -1,5 +1,6 @@
 import os.path
 
+from packaging import version
 from config import get_config
 from customlib.chores import *
 import torch
@@ -58,6 +59,11 @@ def evaluate_main(resumenum=None, __savedir__=None):
         cls_token=True,
     )
 
+    if version.parse(torch.__version__) >= version.parse("2.0.0") and torch.cuda.get_device_capability()[0] >= 7:
+        print(f"Compling network...")
+        network = torch.compile(network)
+        print(f"Network ready!")
+        
     # initialize optimzier
     optimizer = set_optimizer(config, network)
 
