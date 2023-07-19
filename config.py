@@ -14,12 +14,12 @@ def add_argument_group(name):
 
 # Data
 data_arg = add_argument_group('Data')
-data_arg.add_argument('--accumiter', type=int, default=2)
+data_arg.add_argument('--accumiter', type=int, default=4)
 data_arg.add_argument('--batchsize', type=int, default=32, help='Number of batch size. Recommend power of 2')
 data_arg.add_argument('--valbatchsize', type=int, default=1, help='Number of batch size. Must be square of int')
 data_arg.add_argument('--datadir', type=str, default="/dataset")
 data_arg.add_argument('--dataname', type=str, default="Figures_small")
-data_arg.add_argument('--select_view', type=str, default="sparse", choices=["random", "sparse", "limited"])
+data_arg.add_argument('--select_view', type=str, default="sparse", choices=["random", "sparse", "limit"])
 data_arg.add_argument('--num_masked_views', type=int, default=90, help="Number of remaining views after masking procedure")
 
 # Network
@@ -44,8 +44,8 @@ hyper_param_arg.add_argument('--warmup_epochs', type=int, default=50)
 
 # Forward Projection
 proj_arg = add_argument_group('ForwardProejction')
-proj_arg.add_argument('--img_size', type=list, default=[256, 256],
-                      help='Phantom image size')
+proj_arg.add_argument('--img_size', type=int, default=256,
+                    help='Phantom image size')
 proj_arg.add_argument('--pixel_size', type=float, default=0.4525,
                       help='Pixel size of the phantom image')
 proj_arg.add_argument('--quarter_offset', action='store_true', help='detector quarter offset')
@@ -66,7 +66,7 @@ recon_arg.add_argument('--window', type=str, default='rect', help='Reconstructio
 recon_arg.add_argument('--cutoff', type=float, default=0.3, help='Cutoff Frequency of some windows')
 recon_arg.add_argument('--ROIx', type=float, default=0, help='x ROI location')
 recon_arg.add_argument('--ROIy', type=float, default=0, help='y ROI location')
-recon_arg.add_argument('--recon_size', type=list, default=[256, 256], help='Reconstruction image size')
+recon_arg.add_argument('--recon_size', type=int, default=256, help='Reconstruction image size')
 recon_arg.add_argument('--recon_filter', type=str, default='ram-lak', help='Reconstruction Filter')
 recon_arg.add_argument('--recon_interval', type=float, default=0.4525, help='Pixel size of the reconstruction image')
 recon_arg.add_argument('--num_interp', type=int, default=4, help='number of sinc interpolation in sinogram domain')

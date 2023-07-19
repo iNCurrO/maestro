@@ -63,13 +63,13 @@ class FBP(nn.Module):
             self.prepare(self.recon_filter, self.window, self.cos_weight, self.square, self.grid, self.mask)
 
     def param_setting(self):
-        x = self.args.recon_interval * torch.linspace((1 - self.args.recon_size[0]) / 2,
-                                                      (self.args.recon_size[0] - 1) / 2,
-                                                      self.args.recon_size[0],
+        x = self.args.recon_interval * torch.linspace((1 - self.args.recon_size) / 2,
+                                                      (self.args.recon_size - 1) / 2,
+                                                      self.args.recon_size,
                                                       dtype=self.args.datatype) + self.args.ROIx
-        y = self.args.recon_interval * torch.linspace((1 - self.args.recon_size[1]) / 2,
-                                                      (self.args.recon_size[1] - 1) / 2,
-                                                      self.args.recon_size[1],
+        y = self.args.recon_interval * torch.linspace((1 - self.args.recon_size) / 2,
+                                                      (self.args.recon_size - 1) / 2,
+                                                      self.args.recon_size,
                                                       dtype=self.args.datatype) + self.args.ROIy
         x_mat, y_mat = torch.meshgrid(x, y, indexing='xy')
         r = torch.sqrt(torch.pow(x_mat, 2) + torch.pow(y_mat, 2))  # (x,y,2)
@@ -85,7 +85,7 @@ class FBP(nn.Module):
                                        [self.args.view, -1])  # convert range as [-1 1], (view,x*y)
                 view_xy_n = torch.tile(
                     torch.linspace(-1, 1, int(self.args.view / self.args.num_split), dtype=self.args.datatype)[:, None],
-                    [self.args.num_split, self.args.recon_size[0] * self.args.recon_size[1]])
+                    [self.args.num_split, self.args.recon_size * self.args.recon_size])
                 grid = torch.stack([s_xy_n, view_xy_n], dim=2)  # (view,x*y,2)
                 square = torch.reshape(torch.pow(U, 2), [self.args.view, -1])  # (view,x*y)
                 self.s_xy_n = s_xy_n
@@ -102,7 +102,7 @@ class FBP(nn.Module):
                                        [self.args.view, -1])  # convert range as [-1 1], (view,x*y)
                 view_xy_n = torch.tile(
                     torch.linspace(-1, 1, int(self.args.view / self.args.num_split), dtype=self.args.datatype)[:, None],
-                    [self.args.num_split, self.args.recon_size[0] * self.args.recon_size[1]])
+                    [self.args.num_split, self.args.recon_size * self.args.recon_size])
                 grid = torch.stack([s_xy_n, view_xy_n], dim=2)  # (view,x*y,2)
                 square = torch.reshape(torch.pow(L, 2), [self.args.view, -1])  # (view, x*y)
                 return square, grid
@@ -121,7 +121,7 @@ class FBP(nn.Module):
                                                     align_corners=False)  # (batch, ch, view, x*y)
         recon_img = torch.sum(recon_img / self.square, dim=-2)  # (batch, ch, x*y)
         recon_img = self.d_beta * recon_img[:, :, :, None] \
-            .view(batch, -1, self.args.recon_size[0], self.args.recon_size[1])  # [batch,ch,x,y]
+            .view(batch, -1, self.args.recon_size, self.args.recon_size)  # [batch,ch,x,y]
         if not self.args.no_mask:
             recon_img *= self.mask[None, None, :, :]
         return recon_img
@@ -143,11 +143,11 @@ class FBP(nn.Module):
             elif self.args.mode == 'equiangular':
                 gamma = torch.Tensor([self.args.det_interval * (self.args.num_det - 1) / 2 / self.args.SDD])
         radius = self.args.SCD * torch.sin(gamma) / self.args.recon_interval
-        mask = torch.zeros(self.args.recon_size[0], self.args.recon_size[1])
-        x = torch.linspace(-(self.args.recon_size[0] - 1) / 2, (self.args.recon_size[0] - 1) / 2,
-                           self.args.recon_size[0])
-        y = torch.linspace(-(self.args.recon_size[1] - 1) / 2, (self.args.recon_size[1] - 1) / 2,
-                           self.args.recon_size[1])
+        mask = torch.zeros(self.args.recon_size, self.args.recon_size)
+        x = torch.linspace(-(self.args.recon_size - 1) / 2, (self.args.recon_size - 1) / 2,
+                           self.args.recon_size)
+        y = torch.linspace(-(self.args.recon_size - 1) / 2, (self.args.recon_size - 1) / 2,
+                           self.args.recon_size)
         x_mat, y_mat = torch.meshgrid(x, y, indexing='xy')
         mask = torch.pow(torch.pow(x_mat / radius, 2) + torch.pow(y_mat / radius, 2), 2) < 1
         return mask

@@ -15,11 +15,11 @@ args = get_config()
 device = torch.device(args.device)
 args.num_split = 1
 # args.noise=1e6
-# binning_size = (4, 1)
+# binning_size = 4
 # args.num_det = int(args.num_det / binning_size[0])
 # args.det_interval *= binning_size[0]
 # args.recon_interval = args.recon_interval * binning_size[0]
-# args.recon_size = [int(args.recon_size[0] / binning_size[0]), int(args.recon_size[1] / binning_size[0])]
+# args.recon_size = int(args.recon_size / binning_size)
 args.no_mask = True
 
 

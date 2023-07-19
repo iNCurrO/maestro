@@ -56,9 +56,9 @@ class FP(nn.Module):
 
     def param_setting(self):
         # Grid for Projection
-        axis_x = (torch.linspace(-self.args.img_size[0] / 2, self.args.img_size[0] / 2, self.args.img_size[0] + 1,
+        axis_x = (torch.linspace(-self.args.img_size / 2, self.args.img_size / 2, self.args.img_size + 1,
                                  dtype=self.args.datatype) * self.args.pixel_size)  # cm scale, shape : (size+1) (1D)
-        axis_y = (torch.linspace(-self.args.img_size[1] / 2, self.args.img_size[1] / 2, self.args.img_size[1] + 1,
+        axis_y = (torch.linspace(-self.args.img_size / 2, self.args.img_size / 2, self.args.img_size + 1,
                                  dtype=self.args.datatype) * self.args.pixel_size)
 
         if self.args.mode == 'equiangular':
@@ -113,10 +113,10 @@ class FP(nn.Module):
         x_pos = a_mid * (self.det_x_rot[:, :, None] - self.src_point[0, :][:, None, None]) + self.src_point[0, :][:,
                                                                                              None,
                                                                                              None]  # (view, det, x+y+1)
-        x_pos = x_pos / (self.args.pixel_size * (self.args.img_size[0] - 1) / 2)  # normalize grid
+        x_pos = x_pos / (self.args.pixel_size * (self.args.img_size - 1) / 2)  # normalize grid
         y_pos = a_mid * (self.det_y_rot[:, :, None] - self.src_point[1, :][:, None, None]) + self.src_point[1, :][:,
                                                                                              None, None]
-        y_pos = y_pos / (self.args.pixel_size * (self.args.img_size[1] - 1) / 2)
+        y_pos = y_pos / (self.args.pixel_size * (self.args.img_size - 1) / 2)
 
         self.grid_pos = torch.cat((x_pos.unsqueeze(-1), y_pos.unsqueeze(-1)), dim=3)  # (view, det, x+y+1, 2)
 
