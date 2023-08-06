@@ -66,7 +66,7 @@ def set_dataset(config):
     ds = sinogramDataset(__traindir__)
     print(f"Number of training samples: {len(ds)}")
     print(f"Size of sinogram: {ds.shape()}")
-    assert ds.shape()[3] == config.num_det and ds.shape()[2] == config.view, f"Error! the shape of sinogram data ({ds.shape}) is different from the setting ({config.num_det}, {config.view_num})"
+    assert ds.shape()[3] == config.num_det and ds.shape()[2] == config.view, f"Error! the shape of sinogram data ({ds.shape}) is different from the setting ({config.num_det}, {config.view})"
 
     # Dataset for validation
     __valdir__ = os.path.join(basedir, 'val')
