@@ -29,11 +29,11 @@ def evaluate(network, valdataloader, Amatrix, saveimg=True, savedir = None):
         if saveimg:
             save_images(
                 sino.cpu().detach().numpy(), 'origin_sino', str(batch_idx), os.path.join(savedir),
-                config.valbatchsize
+                config.valbatchsize, sino=True
             )
             save_images(
                 denoised_sino.cpu().detach().numpy(), 'inpainted_sino', str(batch_idx), os.path.join(savedir),
-                config.valbatchsize
+                config.valbatchsize, sino=True
             )
             save_images(
                 clean_img.cpu().detach().numpy(), 'clean', str(batch_idx), os.path.join(savedir),
@@ -89,7 +89,7 @@ def evaluate_main(resumenum=None, __savedir__=None):
     print(f"Evaluation logs will be archived at the {__savedir__}\n")
     resume_network(resume=resumenum, network=network, optimizer=optimizer, config=config)
     network.eval()
-    total_SSIM, total_PSNR, total_MSE = evaluate(network, valdataloader, Amatrix)
+    total_SSIM, total_PSNR, total_MSE = evaluate(network, valdataloader, Amatrix, saveimg=True, savedir=__savedir__)
 
     log_str = f'Finished! SSIM: {total_SSIM}, PSNR: {total_PSNR}, '\
               f'MSE in image domain: {total_MSE}, ' \
