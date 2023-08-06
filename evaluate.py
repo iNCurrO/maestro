@@ -27,7 +27,14 @@ def evaluate(network, valdataloader, Amatrix, saveimg=False, savedir = None):
         total_PSNR += calculate_psnr(clean_img, denoised_img)/num_data
         total_MSE += calculate_MSE(clean_img, denoised_img).detach().item()/num_data
         if saveimg:
-            save_image
+            save_images(
+                sino.cpu().detach().numpy(), 'origin_sino', str(batch_idx), os.path.join(savedir),
+                config.valbatchsize
+            )
+            save_images(
+                denoised_sino.cpu().detach().numpy(), 'inpainted_sino', str(batch_idx), os.path.join(savedir),
+                config.valbatchsize
+            )
             save_images(
                 clean_img.cpu().detach().numpy(), 'clean', str(batch_idx), os.path.join(savedir),
                 config.valbatchsize
