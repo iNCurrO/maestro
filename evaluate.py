@@ -12,7 +12,7 @@ from customlib.metrics import *
 config = get_config()
 
 
-def evaluate(network, valdataloader, Amatrix, saveimg=False, savedir = None):
+def evaluate(network, valdataloader, Amatrix, saveimg=True, savedir = None):
     total_PSNR = 0.0
     total_SSIM = 0.0
     total_MSE = 0.0
