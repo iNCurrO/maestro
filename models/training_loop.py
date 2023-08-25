@@ -118,7 +118,7 @@ def training_loop(
             )
             loss_log_text = f"["
             for ii in range(len(loss_item)):
-                loss_log_text += f"{loss_item[ii]}"
+                loss_log_text += f"{loss_item[ii]}, "
                 if not math.isfinite(loss_item[ii]):
                     lprint(
                         f"Error!: Loss is {loss_item[ii]} for {ii}th loss (at epoch {cur_epoch}), stopping training.",

@@ -19,7 +19,7 @@ def evaluate(network, valdataloader, Amatrix, saveimg=False, savedir = None):
     num_data = len(valdataloader)
     for batch_idx, samples in enumerate(valdataloader):
         sino = samples
-        _, denoised_sino, _ = network(sino.cuda(), num_masked_views=config.num_masked_views)
+        _, denoised_sino, _, _, _ = network(sino.cuda(), num_masked_views=config.num_masked_views)
         clean_img = Amatrix(sino.cuda())
 
         denoised_img = Amatrix(denoised_sino)
@@ -79,6 +79,7 @@ def evaluate_main(resumenum=None, __savedir__=None):
     Amatrix = FBP(config)
     print(f"Amatrix initialization finished!")
 
+    # ------------------------ non sparseview
     # Set log
     print(f"Resume from: {config.resume}\n")
 
@@ -97,6 +98,23 @@ def evaluate_main(resumenum=None, __savedir__=None):
     print(log_str)
     with open(os.path.join(__savedir__, 'validation_logs.txt'), 'w') as log_file:
         print(log_str, file=log_file)
+    
+    if config.select_view != "sparse":
+        config.select_view = "sparse"
+        if not os.path.exists(os.path.join(__savedir__, 'test_result_sparseview')):
+            os.mkdir(os.path.join(__savedir__, 'test_result_sparseview'))
+        __savedir__ = os.path.join(__savedir__, 'test_result_sparseview')
+        network._select_view = "sparse"
+        resume_network(resume=resumenum, network=network, optimizer=optimizer, config=config)
+        network.eval()
+        total_SSIM, total_PSNR, total_MSE = evaluate(network, valdataloader, Amatrix, saveimg=True, savedir=__savedir__)
+
+        log_str = f'Finished for sparseview! SSIM: {total_SSIM}, PSNR: {total_PSNR}, '\
+                f'MSE in image domain: {total_MSE}, ' \
+                f'For total {len(valdataloader)}'
+        print(log_str)
+        with open(os.path.join(__savedir__, 'validation_logs.txt'), 'w') as log_file:
+            print(log_str, file=log_file)
 
 
 if __name__ == "__main__":
