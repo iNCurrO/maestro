@@ -12,13 +12,22 @@ class loss_engine:
         return self._network.masking(sinogram, self._num_masked_views, mask)
     
     def run_mae(self, sinogram):
-        loss, pred, mask = self._network(sinogram, self._num_masked_views)
-        return loss, pred, mask
+        if self._cycle_masking:
+            with torch.autocast(device_type='cuda'):
+                loss, pred, mask, mask_rm, recovered_rm = self._network(sinogram, self._num_masked_views)
+            return loss, pred, mask, mask_rm, recovered_rm
+        else:
+            with torch.autocast(device_type='cuda'):
+                loss, pred, mask = self._network(sinogram, self._num_masked_views)
+            return loss, pred, mask, _, _
     
-    def accumulate_gradients(self, sinogram, accumiter = 1):
-        loss, _, _ = self.run_mae(sinogram)
+    def accumulate_gradients(self, sinogram, accumiter = 1, scaler=None):
+        loss, _, _, _, _ = self.run_mae(sinogram)
+        totalloss = 0
         for ii in range(len(loss)):
-            (loss[ii]/accumiter).backward()
+            totalloss += loss[ii]/accumiter
+        scaler.scale(totalloss).backward()
+            # (loss[ii]/accumiter).backward()
         return [loss[ii].cpu().detach().item() for ii in range(len(loss))]
     
 

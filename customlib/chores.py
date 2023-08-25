@@ -36,7 +36,10 @@ def set_dir(config):
         dirnum = int(logdir[-1][:3])+1
     else:
         dirnum = 0
-    __savedir__ = f"{dirnum:03}_{config.masking_mode}_{config.select_view}{config.num_masked_views}_e_h{config.e_head}_dim{config.e_dim}_depth{config.e_depth}_d_h{config.d_head}_dim{config.d_dim}_depth{config.d_depth}"
+    __savedir__ = f"{dirnum:03}_{config.masking_mode}"
+    if config.remasking:
+        __savedir__ += "_cycle"
+    __savedir__ += f"_{config.select_view}{config.num_masked_views}_e_h{config.e_head}_dim{config.e_dim}_depth{config.e_depth}_d_h{config.d_head}_dim{config.d_dim}_depth{config.d_depth}"
     if not os.name == 'nt':
         print("Vessl initialization")
         try:

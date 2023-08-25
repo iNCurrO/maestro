@@ -1,6 +1,7 @@
 import os.path
 import time
 import torch
+import torch.cuda.amp as amp
 import math
 
 if not os.name == 'nt':
@@ -25,6 +26,7 @@ def training_loop(
 ):
     device = torch.device(config.device)
     network = network.to(device)
+    scaler = amp.GradScaler()
 
     # Print parameters
     print()
@@ -41,7 +43,7 @@ def training_loop(
     # Constructing losses
     print("Loading loss function....")
     loss_func = loss_engine(
-        network=network, num_masked_views=config.num_masked_views
+        network=network, num_masked_views=config.num_masked_views, cycle_masking=config.remasking
     )
 
     # Initialize logs
@@ -52,11 +54,11 @@ def training_loop(
     # Initial data
     val_sino = next(iter(validation_set))
     val_batch_size = val_sino.shape[0]
-    save_images(val_sino, epoch=0, tag="target", savedir=log_dir, batchnum=val_batch_size, sino=True)
+    save_images(val_sino, epoch=config.startepoch, tag="target", savedir=log_dir, batchnum=val_batch_size, sino=True)
     if saving_recon_image:
         recon_img = FBP_module(val_sino.cuda()).cpu().numpy()
-        save_images(recon_img,  epoch=0, tag="target_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
-        _, val_recovered_sino, mask = loss_func.run_mae(val_sino.to('cuda'))
+        save_images(recon_img,  epoch=config.startepoch, tag="target_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
+        _, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(val_sino.to('cuda'))
         recon_img = FBP_module(val_recovered_sino.cpu().detach().cuda()).cpu().numpy()
         save_images(
             val_recovered_sino.cpu().detach().numpy(),
@@ -75,6 +77,25 @@ def training_loop(
             sino=False
         )
         save_images(recon_img,  epoch=config.startepoch, tag="denoised_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
+        if config.remasking:
+            save_images(
+                recovered_rm.cpu().detach().numpy(),
+                epoch=config.startepoch,
+                tag="denoised_rm",
+                savedir=log_dir,
+                batchnum=val_batch_size,
+                sino=True
+            )
+            save_images(
+                mask_rm.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
+                epoch=config.startepoch,
+                tag="masked_rm",
+                savedir=log_dir,
+                batchnum=val_batch_size,
+                sino=False
+            )
+            recon_img_rm = FBP_module(recovered_rm.cpu().detach().cuda()).cpu().numpy()
+            save_images(recon_img_rm,  epoch=config.startepoch, tag="denoised_recone_rm", savedir=log_dir, batchnum=val_batch_size, sino=False)  
     network.train()
 
     # Main Part
@@ -93,7 +114,7 @@ def training_loop(
         for batch_idx, samples in enumerate(training_set):
             sino = samples
             loss_item = loss_func.accumulate_gradients(
-                sino.to('cuda'), config.accumiter
+                sino.to('cuda'), config.accumiter, scaler
             )
             loss_log_text = f"["
             for ii in range(len(loss_item)):
@@ -117,13 +138,15 @@ def training_loop(
                     log_dir=log_dir
                 )
             if (accumiter+1)%config.accumiter == 0 :
-                optimizer.step()
+                scaler.step(optimizer)
+                scaler.update()
+                # optimizer.step()
                 optimizer.zero_grad()
             accumiter += 1
         if config.remasking:
             vessl.log(step=cur_epoch, payload={
-                "mse_loss_0": loss_item[0],
-                "mse_loss_1": loss_item[1]
+                "mse_loss_first": loss_item[0],
+                "mse_loss_second": loss_item[1]
             })
         else:
             vessl.log(step=cur_epoch, payload={"mse_loss": loss_item[0]})
@@ -132,7 +155,7 @@ def training_loop(
         network.eval()
         with torch.no_grad():
             if cur_epoch%10 == 0:
-                val_loss, val_recovered_sino, mask = loss_func.run_mae(val_sino.to('cuda'))
+                val_loss, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(val_sino.to('cuda'))
                 val_loss_log_text = "["
                 for ii in range(len(val_loss)):
                     val_loss_log_text += str(val_loss[ii].cpu().detach().item())
@@ -156,7 +179,16 @@ def training_loop(
                     batchnum=val_batch_size,
                     sino=True
                 )
-                if config.select_view == "random" or cur_epoch == 0:
+                if config.remasking:
+                    save_images(
+                        recovered_rm.cpu().detach().numpy(),
+                        epoch=cur_epoch,
+                        tag="denoised_rm",
+                        savedir=log_dir,
+                        batchnum=val_batch_size,
+                        sino=True
+                    )
+                if config.select_view == "random":
                     save_images(
                         mask.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
                         epoch=cur_epoch,
@@ -165,9 +197,22 @@ def training_loop(
                         batchnum=val_batch_size,
                         sino=False
                     )
+                    if config.remasking:
+                        save_images(
+                            mask_rm.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
+                            epoch=cur_epoch,
+                            tag="masked_rm",
+                            savedir=log_dir,
+                            batchnum=val_batch_size,
+                            sino=False
+                        )
                 if saving_recon_image:
                     recon_img = FBP_module(val_recovered_sino.cpu().detach().cuda()).cpu().numpy()
                     save_images(recon_img,  epoch=cur_epoch, tag="denoised_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
+                    if config.remasking:
+                        recon_img_rm = FBP_module(recovered_rm.cpu().detach().cuda()).cpu().numpy()
+                        save_images(recon_img_rm,  epoch=cur_epoch, tag="denoised_recone_rm", savedir=log_dir, batchnum=val_batch_size, sino=False)  
+                        
                 if not os.name == 'nt':
                     vessl.log(step=cur_epoch, payload={
                         "SSIM": val_ssim,

@@ -152,6 +152,23 @@ class MaskedAutoEncoder(torch.nn.Module):
         
         # Generate binarized mask
         return sinogram_masked, mask, idx_restore
+    
+    def fixed_masking(self, sinogram, mask, num_masked_views):
+        N, V, L = sinogram.shape
+        mask_rm = torch.ones_like(mask)
+        mask_rm = mask_rm - mask
+        
+        idx_shuffle = torch.argsort(mask, dim=1, descending=True)
+        idx_keep = idx_shuffle[:, num_masked_views:]
+        sinogram_masked = torch.gather(
+            sinogram, dim=1, index=idx_keep.unsqueeze(-1).repeat(1, 1, L)
+            )
+        
+        idx_shuffle = torch.argsort(mask_rm, dim=1, descending=True)
+        idx_restore_rm = torch.argsort(idx_shuffle, dim=1)
+        
+        # Generate binarized mask
+        return sinogram_masked, mask_rm, idx_restore_rm
         
     def _init_weights(self, m):
         if isinstance(m, torch.nn.Linear):
@@ -179,7 +196,7 @@ class MaskedAutoEncoder(torch.nn.Module):
             else:
                 raise "Not implemented masking mode: {self._masking}"
         else:
-            raise "Not implemented fixed mask mode"
+            return self.fixed_masking(x, mask, num_masked_views)
             
     def forward_encoder(self, sinogram, num_masked_views=18):
         # embed patches
@@ -190,10 +207,14 @@ class MaskedAutoEncoder(torch.nn.Module):
 
         # masking: length -> length * mask_ratio
         sinogram_masked, mask, idx_restore = self.masking(x, num_masked_views)
-        # append cls token
-        cls_token = self.cls_token + self.pos_embed_cls
-        cls_tokens = cls_token.expand(sinogram_masked.shape[0], -1, -1)
-        x = torch.cat((cls_tokens, sinogram_masked), dim=1)
+        
+        if self._cls_token:
+            # append cls token
+            cls_token = self.cls_token + self.pos_embed_cls
+            cls_tokens = cls_token.expand(sinogram_masked.shape[0], -1, -1)
+            x = torch.cat((cls_tokens, sinogram_masked), dim=1)
+        else:
+            x = sinogram_masked
 
         # apply Transformer blocks
         for blk in self.blocks:
@@ -201,6 +222,29 @@ class MaskedAutoEncoder(torch.nn.Module):
         latent = self.norm(latent)
 
         return latent, mask, idx_restore
+    
+    def re_forward_encoder(self, sinogram, mask, num_masked_views=18):
+        x = self.patch_embed(sinogram)
+
+        # add pos embed w/o cls token
+        x = x + self.pos_embed
+
+        # masking: length -> length * mask_ratio
+        sinogram_masked, mask_rm, idx_restore_rm = self.masking(x, num_masked_views, mask)
+        
+        if self._cls_token:
+            # append cls token
+            cls_token = self.cls_token + self.pos_embed_cls
+            cls_tokens = cls_token.expand(sinogram_masked.shape[0], -1, -1)
+            x = torch.cat((cls_tokens, sinogram_masked), dim=1)
+        else:
+            x = sinogram_masked
+            
+        for blk in self.blocks:
+            latent = blk(x)
+        latent = self.norm(latent)
+        
+        return latent, mask_rm, idx_restore_rm
 
     def forward_decoder(self, x, idx_restore):
         # embed tokens
@@ -260,9 +304,18 @@ class MaskedAutoEncoder(torch.nn.Module):
         x = torch.gather(x, dim=1, index=mask.reshape([x.shape[0], 1, mask.shape[-1], 1]).repeat(1, 1, 1, x.shape[-1]))
         return x
 
+    @torch.autocast(device_type='cuda')
     def forward(self, sinogram, num_masked_views=18):
         if self._remasking:
-            pass
+            latent, mask, idx_restore = self.forward_encoder(sinogram, num_masked_views=num_masked_views)
+            pred = self.forward_decoder(latent, idx_restore)
+            loss = self.forward_loss(sinogram, pred, mask)
+            recovered = self.recover_image(pred, sinogram, mask)
+            latent_rm, mask_rm, idx_restore_rm = self.re_forward_encoder(recovered, mask, num_masked_views)
+            pred_rm = self.forward_decoder(latent_rm, idx_restore_rm)
+            loss_rm = self.forward_loss(recovered, pred_rm, mask_rm)
+            recovered_rm = self.recover_image(pred, recovered, mask_rm)
+            return [loss, loss_rm], recovered, mask, mask_rm, recovered_rm
         else:
             latent, mask, idx_restore = self.forward_encoder(sinogram, num_masked_views=num_masked_views)
             pred = self.forward_decoder(latent, idx_restore)
