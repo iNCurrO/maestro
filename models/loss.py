@@ -19,7 +19,7 @@ class loss_engine:
         else:
             with torch.autocast(device_type='cuda'):
                 loss, pred, mask = self._network(sinogram, self._num_masked_views)
-            return loss, pred, mask, _, _
+            return loss, pred, mask, None, None
     
     def accumulate_gradients(self, sinogram, accumiter = 1, scaler=None):
         loss, _, _, _, _ = self.run_mae(sinogram)
