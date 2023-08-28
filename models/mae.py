@@ -321,4 +321,4 @@ class MaskedAutoEncoder(torch.nn.Module):
             pred = self.forward_decoder(latent, idx_restore)
             loss = self.forward_loss(sinogram, pred, mask)
             recovered = self.recover_image(pred, sinogram, mask)
-            return [loss], recovered, mask
+            return [loss], recovered, mask, None, None
