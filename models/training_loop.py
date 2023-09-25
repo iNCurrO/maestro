@@ -43,7 +43,7 @@ def training_loop(
     # Constructing losses
     print("Loading loss function....")
     loss_func = loss_engine(
-        network=network, num_masked_views=config.num_masked_views, cycle_masking=config.remasking
+        network=network, num_masked_views=config.num_masked_views, cycle_masking=config.remasking, num_recover_views=config.num_recover_views
     )
 
     # Initialize logs

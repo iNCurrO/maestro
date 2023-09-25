@@ -18,9 +18,10 @@ data_arg.add_argument('--accumiter', type=int, default=4)
 data_arg.add_argument('--batchsize', type=int, default=32, help='Number of batch size. Recommend power of 2')
 data_arg.add_argument('--valbatchsize', type=int, default=1, help='Number of batch size. Must be square of int')
 data_arg.add_argument('--datadir', type=str, default="/dataset")
-data_arg.add_argument('--dataname', type=str, default="Figures_small")
+data_arg.add_argument('--dataname', type=str, default="Figure_very_small")
 data_arg.add_argument('--select_view', type=str, default="sparse", choices=["random", "sparse", "limit"])
 data_arg.add_argument('--num_masked_views', type=int, default=90, help="Number of remaining views after masking procedure")
+data_arg.add_argument('--num_recover_views', type=int, default=None, help="Number of views to recover")
 
 # Network
 network_arg = add_argument_group('Network')
@@ -35,18 +36,18 @@ network_arg.add_argument('--d_dim', type=int, default=512, help="Dimension of to
 
 # #hyperparam
 hyper_param_arg = add_argument_group('Hyperparameters')
-hyper_param_arg.add_argument('--trainingepoch', type=int, default=500)
+hyper_param_arg.add_argument('--trainingepoch', type=int, default=1000)
 hyper_param_arg.add_argument('--optimizer', type=str, default="ADAMW", choices=["ADAM", "ADAMW"])
-hyper_param_arg.add_argument('--learningrate', type=float, default=2.5e-5)
+hyper_param_arg.add_argument('--learningrate', type=float, default=1e-3)
 hyper_param_arg.add_argument('--min_lr', type=float, default=1e-7)
-hyper_param_arg.add_argument('--weightdecay', type=float, default=1e-4)
+hyper_param_arg.add_argument('--weightdecay', type=float, default=1e-5)
 hyper_param_arg.add_argument('--warmup_epochs', type=int, default=50)
 
 # Forward Projection
 proj_arg = add_argument_group('ForwardProejction')
-proj_arg.add_argument('--img_size', type=int, default=256,
+proj_arg.add_argument('--img_size', type=int, default=128,
                     help='Phantom image size')
-proj_arg.add_argument('--pixel_size', type=float, default=0.4525,
+proj_arg.add_argument('--pixel_size', type=float, default=0.5,
                       help='Pixel size of the phantom image')
 proj_arg.add_argument('--quarter_offset', action='store_true', help='detector quarter offset')
 proj_arg.add_argument('--geometry', type=str, default='fan', help='CT geometry')
@@ -66,16 +67,16 @@ recon_arg.add_argument('--window', type=str, default='rect', help='Reconstructio
 recon_arg.add_argument('--cutoff', type=float, default=0.3, help='Cutoff Frequency of some windows')
 recon_arg.add_argument('--ROIx', type=float, default=0, help='x ROI location')
 recon_arg.add_argument('--ROIy', type=float, default=0, help='y ROI location')
-recon_arg.add_argument('--recon_size', type=int, default=256, help='Reconstruction image size')
+recon_arg.add_argument('--recon_size', type=int, default=128, help='Reconstruction image size')
 recon_arg.add_argument('--recon_filter', type=str, default='ram-lak', help='Reconstruction Filter')
-recon_arg.add_argument('--recon_interval', type=float, default=0.4525, help='Pixel size of the reconstruction image')
+recon_arg.add_argument('--recon_interval', type=float, default=0.5, help='Pixel size of the reconstruction image')
 recon_arg.add_argument('--num_interp', type=int, default=4, help='number of sinc interpolation in sinogram domain')
 recon_arg.add_argument('--no_mask', action='store_true', help='Not using Masking')
 
 # Geometry conditions
-proj_arg.add_argument('--SCD', type=float, default=300, help='source-center distance (mm scale)')
-proj_arg.add_argument('--SDD', type=float, default=600, help='source-detector distance (mm scale)')
-proj_arg.add_argument('--num_det', type=int, default=362, help='number of detector')
+proj_arg.add_argument('--SCD', type=float, default=200, help='source-center distance (mm scale)')
+proj_arg.add_argument('--SDD', type=float, default=400, help='source-detector distance (mm scale)')
+proj_arg.add_argument('--num_det', type=int, default=181, help='number of detector')
 proj_arg.add_argument('--det_interval', type=float, default=1, help='interval of detector (mm scale)')
 proj_arg.add_argument('--det_lets', type=int, default=3, help='number of detector lets')
 

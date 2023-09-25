@@ -60,6 +60,9 @@ def main():
         # Make dir
         print(f"logs will be archived at the {__savedir__}\n")
         config.startepoch = 0
+        
+    if config.num_recover_views == None:
+        config.num_recover_views = config.num_masked_views
 
     if not os.name == 'nt':
         hp = {

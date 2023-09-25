@@ -19,7 +19,7 @@ def evaluate(network, valdataloader, Amatrix, saveimg=False, savedir = None):
     num_data = len(valdataloader)
     for batch_idx, samples in enumerate(valdataloader):
         sino = samples
-        _, denoised_sino, _, _, _ = network(sino.cuda(), num_masked_views=config.num_masked_views)
+        _, denoised_sino, _, _, _ = network(sino.cuda(), num_masked_views=config.num_recover_views)
         clean_img = Amatrix(sino.cuda())
 
         denoised_img = Amatrix(denoised_sino)
