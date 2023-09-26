@@ -44,6 +44,8 @@ def main():
     if version.parse(torch.__version__) >= version.parse("2.0.0") and torch.cuda.get_device_capability()[0] >= 7:
         print(f"Compling network...")
         network = torch.compile(network)
+        torch._dynamo.config.verbose = True
+        torch._dynamo.config.suppress_erros = True
         print(f"Network ready!")
 
     # initialize optimzier
