@@ -45,7 +45,7 @@ def main():
         print(f"Compling network...")
         network = torch.compile(network)
         torch._dynamo.config.verbose = True
-        torch._dynamo.config.suppress_erros = True
+        torch._dynamo.config.suppress_errors = True
         print(f"Network ready!")
 
     # initialize optimzier
