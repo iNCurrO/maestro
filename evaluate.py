@@ -17,6 +17,8 @@ def evaluate(network, valdataloader, Amatrix, saveimg=False, savedir = None):
     total_SSIM = 0.0
     total_MSE = 0.0
     num_data = len(valdataloader)
+    if config.num_recover_views == None:
+        config.num_recover_views = config.num_masked_views
     for batch_idx, samples in enumerate(valdataloader):
         sino = samples
         _, denoised_sino, _, _, _ = network(sino.cuda(), num_masked_views=config.num_recover_views)
