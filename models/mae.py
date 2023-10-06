@@ -297,6 +297,10 @@ class MaskedAutoEncoder(torch.nn.Module):
         loss = loss.mean(dim=-1)  # [N, L], mean loss per patch
 
         loss = (loss * mask).sum() / mask.sum()  # mean loss on removed patches
+        if not math.isfinite(loss):
+            print(pred, target, mask)
+            print("=====================================")
+            print(loss, mask.sum())
         return loss
 
     def recover_image(self, pred, sinogram, mask):
