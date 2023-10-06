@@ -2,6 +2,7 @@ import torch
 from timm.models.vision_transformer import Block
 from models.customModule import PatchEmbed, get_1d_sincos_pos_embed
 from customlib.chores import patchify, unpatchify
+import math
 
 
 class MaskedAutoEncoder(torch.nn.Module):
