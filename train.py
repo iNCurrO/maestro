@@ -37,8 +37,8 @@ def main():
         decoder_embed_dim=config.d_dim,
         decoder_num_heads=config.d_head,
         select_view=config.select_view,
-        remasking= config.remasking,
-        cls_token=True,
+        remasking= False,
+        cls_token=False,
     )
     
     if version.parse(torch.__version__) >= version.parse("2.0.0") and torch.cuda.get_device_capability()[0] >= 7:

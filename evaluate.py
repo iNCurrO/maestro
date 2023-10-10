@@ -12,7 +12,44 @@ from customlib.metrics import *
 config = get_config()
 
 
-def evaluate(network, valdataloader, Amatrix, saveimg=False, savedir = None):
+def evaluate(network, valdataloader, AmatrixT, saveimg=False, savedir = None):
+    total_PSNR = 0.0
+    total_SSIM = 0.0
+    total_MSE = 0.0
+    num_data = len(valdataloader)
+    if config.num_recover_views == None:
+        config.num_recover_views = config.num_masked_views
+    for batch_idx, samples in enumerate(valdataloader):
+        sino = samples
+        _, denoised_sino, _, _, _ = network(sino.cuda(), num_masked_views=config.num_recover_views)
+        clean_img = AmatrixT(sino.cuda())
+
+        denoised_img = AmatrixT(denoised_sino)
+        total_SSIM += calculate_SSIM(clean_img, denoised_img)/num_data
+        total_PSNR += calculate_psnr(clean_img, denoised_img)/num_data
+        total_MSE += calculate_MSE(clean_img, denoised_img).detach().item()/num_data
+        if saveimg:
+            save_images(
+                sino.cpu().detach().numpy(), 'origin_sino', str(batch_idx), os.path.join(savedir),
+                config.valbatchsize, sino=True
+            )
+            save_images(
+                denoised_sino.cpu().detach().numpy(), 'inpainted_sino', str(batch_idx), os.path.join(savedir),
+                config.valbatchsize, sino=True
+            )
+            save_images(
+                clean_img.cpu().detach().numpy(), 'clean', str(batch_idx), os.path.join(savedir),
+                config.valbatchsize
+            )
+            save_images(
+                denoised_img.cpu().detach().numpy(), 'denoised', str(batch_idx), os.path.join(savedir),
+                config.valbatchsize
+            )
+        torch.cuda.empty_cache()
+    return total_SSIM, total_PSNR, total_MSE
+
+
+def evaluate_diff(network, valdataloader, Amatrix, AmatrixT, saveimg=False, savedir = None):
     total_PSNR = 0.0
     total_SSIM = 0.0
     total_MSE = 0.0

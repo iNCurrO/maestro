@@ -311,7 +311,6 @@ class MaskedAutoEncoder(torch.nn.Module):
         x = torch.gather(x, dim=1, index=mask.reshape([x.shape[0], 1, mask.shape[-1], 1]).repeat(1, 1, 1, x.shape[-1]))
         return x
 
-    @torch.autocast(device_type='cuda')
     def forward(self, sinogram, num_masked_views=18):
         if self._remasking:
             latent, mask, idx_restore = self.forward_encoder(sinogram, num_masked_views=num_masked_views)

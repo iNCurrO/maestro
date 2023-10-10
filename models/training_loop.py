@@ -26,7 +26,7 @@ def training_loop(
 ):
     device = torch.device(config.device)
     network = network.to(device)
-    scaler = amp.GradScaler()
+    # scaler = amp.GradScaler()
 
     # Print parameters
     print()
@@ -36,7 +36,7 @@ def training_loop(
     # Generate Amatrix
     if saving_recon_image:
         print(f"Amatrix initialization...")
-        # Amatrix = FP(config)
+        Amatrix = FP(config)
         FBP_module = FBP(config)
         print(f"Amatrix initialization finished!")
 
@@ -114,7 +114,7 @@ def training_loop(
         for batch_idx, samples in enumerate(training_set):
             sino = samples
             loss_item = loss_func.accumulate_gradients(
-                sino.to('cuda'), config.accumiter, scaler
+                sino.to('cuda'), config.accumiter, None #scaler
             )
             loss_log_text = f"["
             for ii in range(len(loss_item)):
@@ -138,9 +138,9 @@ def training_loop(
                     log_dir=log_dir
                 )
             if (accumiter+1)%config.accumiter == 0 :
-                scaler.step(optimizer)
-                scaler.update()
-                # optimizer.step()
+                # scaler.step(optimizer)
+                # scaler.update()
+                optimizer.step()
                 optimizer.zero_grad()
             accumiter += 1
         if config.remasking:
@@ -245,6 +245,8 @@ def training_loop(
                 save_network(network=network, epoch=cur_epoch, optimizer=optimizer, savedir=log_dir)
         network.train()
         adjust_lr(optimizer, cur_epoch, config)
+        if config.remasking and cur_epoch >= config.warmup_epochs:
+            network._remasking = True
         if not os.name == 'nt':
             vessl.progress((cur_epoch+1)/training_epoch)
 

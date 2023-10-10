@@ -31,8 +31,8 @@ class loss_engine:
         totalloss = 0
         for ii in range(len(loss)):
             totalloss += loss[ii]/accumiter
-        scaler.scale(totalloss).backward()
-            # (loss[ii]/accumiter).backward()
+            (loss[ii]/accumiter).backward()
+        # scaler.scale(totalloss).backward()
         return [loss[ii].cpu().detach().item() for ii in range(len(loss))]
     
 

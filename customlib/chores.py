@@ -9,6 +9,12 @@ if not os.name == 'nt':
     import vessl
 
 
+def diff_from_recon(ori_sinogram, recover_sinogram, Amatrix, AmatrixT, num_views):
+    ori_img = AmatrixT(ori_sinogram)
+    recover_img = AmatrixT(recover_sinogram)
+    
+
+
 def patchify(sinogram):
     """
     sinogram: (N, 1, V, D)
