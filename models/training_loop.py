@@ -77,25 +77,25 @@ def training_loop(
             sino=False
         )
         save_images(recon_img,  epoch=config.startepoch, tag="denoised_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
-        if config.remasking:
-            save_images(
-                recovered_rm.cpu().detach().numpy(),
-                epoch=config.startepoch,
-                tag="denoised_rm",
-                savedir=log_dir,
-                batchnum=val_batch_size,
-                sino=True
-            )
-            save_images(
-                mask_rm.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
-                epoch=config.startepoch,
-                tag="masked_rm",
-                savedir=log_dir,
-                batchnum=val_batch_size,
-                sino=False
-            )
-            recon_img_rm = FBP_module(recovered_rm.cpu().detach().cuda()).cpu().numpy()
-            save_images(recon_img_rm,  epoch=config.startepoch, tag="denoised_recone_rm", savedir=log_dir, batchnum=val_batch_size, sino=False)  
+        # if config.remasking:
+        #     save_images(
+        #         recovered_rm.cpu().detach().numpy(),
+        #         epoch=config.startepoch,
+        #         tag="denoised_rm",
+        #         savedir=log_dir,
+        #         batchnum=val_batch_size,
+        #         sino=True
+        #     )
+        #     save_images(
+        #         mask_rm.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
+        #         epoch=config.startepoch,
+        #         tag="masked_rm",
+        #         savedir=log_dir,
+        #         batchnum=val_batch_size,
+        #         sino=False
+        #     )
+        #     recon_img_rm = FBP_module(recovered_rm.cpu().detach().cuda()).cpu().numpy()
+        #     save_images(recon_img_rm,  epoch=config.startepoch, tag="denoised_recone_rm", savedir=log_dir, batchnum=val_batch_size, sino=False)  
     network.train()
 
     # Main Part
@@ -143,13 +143,13 @@ def training_loop(
                 optimizer.step()
                 optimizer.zero_grad()
             accumiter += 1
-        if config.remasking:
+        if config.remasking and cur_epoch >= config.warmup_epochs:
             vessl.log(step=cur_epoch, payload={
                 "mse_loss_first": loss_item[0],
                 "mse_loss_second": loss_item[1]
             })
         else:
-            vessl.log(step=cur_epoch, payload={"mse_loss": loss_item[0]})
+            vessl.log(step=cur_epoch, payload={"mse_loss_first": loss_item[0]})
 
         # Save check point and evaluate
         network.eval()
@@ -179,7 +179,7 @@ def training_loop(
                     batchnum=val_batch_size,
                     sino=True
                 )
-                if config.remasking:
+                if config.remasking and cur_epoch >= config.warmup_epochs:
                     save_images(
                         recovered_rm.cpu().detach().numpy(),
                         epoch=cur_epoch,
@@ -197,7 +197,7 @@ def training_loop(
                         batchnum=val_batch_size,
                         sino=False
                     )
-                    if config.remasking:
+                    if config.remasking and cur_epoch >= config.warmup_epochs:
                         save_images(
                             mask_rm.reshape([1, 1, 360, 1]).cpu().detach().numpy(),
                             epoch=cur_epoch,
@@ -209,7 +209,7 @@ def training_loop(
                 if saving_recon_image:
                     recon_img = FBP_module(val_recovered_sino.cpu().detach().cuda()).cpu().numpy()
                     save_images(recon_img,  epoch=cur_epoch, tag="denoised_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
-                    if config.remasking:
+                    if config.remasking and cur_epoch >= config.warmup_epochs:
                         recon_img_rm = FBP_module(recovered_rm.cpu().detach().cuda()).cpu().numpy()
                         save_images(recon_img_rm,  epoch=cur_epoch, tag="denoised_recone_rm", savedir=log_dir, batchnum=val_batch_size, sino=False)  
                         
@@ -218,13 +218,13 @@ def training_loop(
                         "SSIM": val_ssim,
                         "PSNR": val_psnr,
                     })
-                    if config.remasking:
+                    if config.remasking and cur_epoch >= config.warmup_epochs:
                         vessl.log(step=cur_epoch, payload={
                             "val_mse_loss_0": loss_item[0],
                             "val_mse_loss_1": loss_item[1]
                         })
                     else:
-                        vessl.log(step=cur_epoch, payload={"val_mse_loss": loss_item[0]})
+                        vessl.log(step=cur_epoch, payload={"val_mse_loss_0": loss_item[0]})
                 if not os.name == 'nt':
                     vessl.log(payload={"denoised_images": [
                         vessl.Image(
