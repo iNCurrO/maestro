@@ -245,7 +245,7 @@ def training_loop(
                 save_network(network=network, epoch=cur_epoch, optimizer=optimizer, savedir=log_dir)
         network.train()
         adjust_lr(optimizer, cur_epoch, config)
-        if config.remasking and cur_epoch -1 >= config.warmup_epochs:
+        if config.remasking and cur_epoch+1 >= config.warmup_epochs:
             network._remasking = True
         if not os.name == 'nt':
             vessl.progress((cur_epoch+1)/training_epoch)
