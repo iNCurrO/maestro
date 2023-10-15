@@ -261,7 +261,7 @@ class MaskedAutoEncoder(torch.nn.Module):
             # add pos embed
             x = x + torch.cat([self.decoder_pos_embed, self.decoder_pos_embed_cls], dim=1) 
         else:
-            mask_tokens = self.mask_token.repeat(x.shape[0], idx_restore[1] + 1 - x.shape[1], 1)
+            mask_tokens = self.mask_token.repeat(x.shape[0], idx_restore.shape[1] + 1 - x.shape[1], 1)
             x_ = torch.cat([x, mask_tokens], dim=1)
             x = torch.gather(x_, dim=1, index=idx_restore.unsqueeze(-1).repeat(1, 1, x.shape[2]))
             # x = torch.cat([x, x_], dim=1)
