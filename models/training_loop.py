@@ -10,6 +10,7 @@ from customlib.chores import save_network, save_images, lprint, adjust_lr
 # from customlib.metrics import * # TODO
 from models.loss import *
 from forwardprojector.FBP import FBP 
+from 
 from evaluate import evaluate 
 from datetime import timedelta
 
@@ -36,7 +37,7 @@ def training_loop(
     # Generate Amatrix
     if saving_recon_image:
         print(f"Amatrix initialization...")
-        Amatrix = FP(config)
+        # Amatrix = FP(config)
         FBP_module = FBP(config)
         print(f"Amatrix initialization finished!")
 
