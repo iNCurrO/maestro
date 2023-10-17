@@ -30,7 +30,7 @@ class loss_engine:
         loss, _, _, _, _ = self.run_mae(sinogram, training=True)
         totalloss = 0
         for ii in range(len(loss)):
-            totalloss += loss[ii]/accumiter
+            totalloss += loss[ii]/(accumiter * len(loss))
             # (loss[ii]/accumiter).backward()
         # scaler.scale(totalloss).backward()
         totalloss.backward()
