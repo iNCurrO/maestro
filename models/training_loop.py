@@ -44,7 +44,7 @@ def training_loop(
     # Constructing losses
     print("Loading loss function....")
     loss_func = loss_engine(
-        network=network, num_masked_views=config.num_masked_views, cycle_masking=config.remasking, num_recover_views=config.num_recover_views
+        num_masked_views=config.num_masked_views, cycle_masking=config.remasking, num_recover_views=config.num_recover_views
     )
 
     # Initialize logs
@@ -55,11 +55,12 @@ def training_loop(
     # Initial data
     val_sino = next(iter(validation_set))
     val_batch_size = val_sino.shape[0]
+    masking_tag = False
     save_images(val_sino, epoch=config.startepoch, tag="target", savedir=log_dir, batchnum=val_batch_size, sino=True)
     if saving_recon_image:
         recon_img = FBP_module(val_sino.cuda()).cpu().numpy()
         save_images(recon_img,  epoch=config.startepoch, tag="target_recone", savedir=log_dir, batchnum=val_batch_size, sino=False)  
-        _, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(val_sino.to('cuda'))
+        _, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(network, val_sino.to('cuda'), masking_tag)
         recon_img = FBP_module(val_recovered_sino.cpu().detach().cuda()).cpu().numpy()
         save_images(
             val_recovered_sino.cpu().detach().numpy(),
@@ -115,7 +116,7 @@ def training_loop(
         for batch_idx, samples in enumerate(training_set):
             sino = samples
             loss_item = loss_func.accumulate_gradients(
-                sino.to('cuda'), config.accumiter, None #scaler
+                network, sino.to('cuda'), config.accumiter, masking_tag, None #scaler
             )
             loss_log_text = f"["
             for ii in range(len(loss_item)):
@@ -156,7 +157,7 @@ def training_loop(
         network.eval()
         with torch.no_grad():
             if cur_epoch%10 == 0:
-                val_loss, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(val_sino.to('cuda'))
+                val_loss, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(network, val_sino.to('cuda'), masking_tag)
                 val_loss_log_text = "["
                 for ii in range(len(val_loss)):
                     val_loss_log_text += str(val_loss[ii].cpu().detach().item())
@@ -247,8 +248,7 @@ def training_loop(
         network.train()
         adjust_lr(optimizer, cur_epoch, config)
         if config.remasking and (cur_epoch+1 >= config.warmup_epochs):
-            print("Adjust masking tag")
-            network._remasking = True
+            masking_tag = True
         if not os.name == 'nt':
             vessl.progress((cur_epoch+1)/training_epoch)
 
