@@ -38,7 +38,7 @@ network_arg.add_argument('--d_dim', type=int, default=512, help="Dimension of to
 hyper_param_arg = add_argument_group('Hyperparameters')
 hyper_param_arg.add_argument('--trainingepoch', type=int, default=1000)
 hyper_param_arg.add_argument('--optimizer', type=str, default="ADAMW", choices=["ADAM", "ADAMW"])
-hyper_param_arg.add_argument('--learningrate', type=float, default=2.5e-3)
+hyper_param_arg.add_argument('--learningrate', type=float, default=2.5e-5)
 hyper_param_arg.add_argument('--min_lr', type=float, default=1e-7)
 hyper_param_arg.add_argument('--weightdecay', type=float, default=1e-5)
 hyper_param_arg.add_argument('--warmup_epochs', type=int, default=50)
