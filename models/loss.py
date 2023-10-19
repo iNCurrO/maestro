@@ -16,14 +16,9 @@ class loss_engine:
             masking_views = self._num_masked_views
         else:
             masking_views = self._num_recover_views
-        if self._cycle_masking:
-            with torch.autocast(device_type='cuda'):
-                loss, pred, mask, mask_rm, recovered_rm = network(sinogram, masking_views, masking_tag)
-            return loss, pred, mask, mask_rm, recovered_rm
-        else:
-            with torch.autocast(device_type='cuda'):
-                loss, pred, mask, _, _ = network(sinogram, masking_views, masking_tag)
-            return loss, pred, mask, None, None
+        with torch.autocast(device_type='cuda'):
+            loss, pred, mask, mask_rm, recovered_rm = network(sinogram, masking_views, masking_tag)
+        return loss, pred, mask, mask_rm, recovered_rm
     
     def accumulate_gradients(self, network, sinogram, accumiter = 1, masking_tag=None, scaler=None):
         loss, _, _, _, _ = self.run_mae(network, sinogram, training=True, masking_tag=masking_tag)
