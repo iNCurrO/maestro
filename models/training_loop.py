@@ -157,7 +157,11 @@ def training_loop(
         network.eval()
         with torch.no_grad():
             if cur_epoch%10 == 0:
-                val_loss, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(network, val_sino.to('cuda'), masking_tag)
+                val_loss, val_recovered_sino, mask, mask_rm, recovered_rm = loss_func.run_mae(
+                    network, val_sino.to('cuda'), 
+                    training = False, 
+                    masking_tag = masking_tag
+                    )
                 val_loss_log_text = "["
                 for ii in range(len(val_loss)):
                     val_loss_log_text += str(val_loss[ii].cpu().detach().item())
