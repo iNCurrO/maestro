@@ -26,6 +26,7 @@ data_arg.add_argument('--num_recover_views', type=int, default=None, help="Numbe
 # Network
 network_arg = add_argument_group('Network')
 network_arg.add_argument('--masking_mode', type=str, default="mae")
+network_arg.add_argument('--cls_token', type=bool, default=False)
 network_arg.add_argument('--remasking', type=bool, default=False)
 network_arg.add_argument('--e_head', type=int, default=16, help='Number of heads for MSA in encoder')
 network_arg.add_argument('--e_depth', type=int, default=24, help="Depth of encoder (number of stacked transformer block)")
