@@ -31,7 +31,7 @@ def evaluate(network, valdataloader, AmatrixT, saveimg=False, savedir = None):
         if saveimg:
             save_images(
                 sino.cpu().detach().numpy(), 'origin_sino', str(batch_idx), os.path.join(savedir),
-                config.valbatchsize, sino=T1e
+                config.valbatchsize, sino=True
             )
             save_images(
                 denoised_sino.cpu().detach().numpy(), 'inpainted_sino', str(batch_idx), os.path.join(savedir),
