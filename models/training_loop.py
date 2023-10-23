@@ -55,7 +55,10 @@ def training_loop(
     # Initial data
     val_sino = next(iter(validation_set))
     val_batch_size = val_sino.shape[0]
-    masking_tag = False
+    if config.remasking and (config.startepoch >= config.warmup_epochs):
+        masking_tag = True
+    else:
+        masking_tag = False
     save_images(val_sino, epoch=config.startepoch, tag="target", savedir=log_dir, batchnum=val_batch_size, sino=True)
     if saving_recon_image:
         recon_img = FBP_module(val_sino.cuda()).cpu().numpy()
