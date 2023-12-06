@@ -88,6 +88,8 @@ def resume_network(resume, network, optimizer, config):
     traindir, resume_file = find_network(resume_file=resume)
     if resume_file is not None:
         ckpt = torch.load(os.path.join(config.logdir, traindir, resume_file))
+        print(network.state_dict())
+        print(ckpt['model_state_dict'])
         network.load_state_dict(ckpt['model_state_dict'])
         network = network.cuda()
         if ckpt['optimizer_state_dict']:

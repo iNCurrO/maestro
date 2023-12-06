@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel
 ENV PYTHON_VERSION=3.10
 ENV DEBIAN_FRONTEND noninteractive
 
